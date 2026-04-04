@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wolf Terminal V1 | MSnR Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        terminalBg: '#0B0E11',
+                        terminalSurface: '#161A1E',
+                        terminalBorder: '#2B2F36',
+                        wolfGreen: '#00C076',
+                        wolfRed: '#F6465D',
+                        wolfGold: '#F0B90B',
+                        textPrimary: '#EAECEF',
+                        textSecondary: '#848E9C'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #0B0E11; color: #EAECEF; font-family: 'Inter', system-ui, sans-serif; overflow-x: hidden; }
+        .glow-green { box-shadow: 0 0 15px rgba(0, 192, 118, 0.2); }
+        .glow-red { box-shadow: 0 0 15px rgba(246, 70, 93, 0.2); }
+        .terminal-grid { background-image: radial-gradient(#2B2F36 1px, transparent 1px); background-size: 20px 20px; }
+        .sidebar-link-active { background-color: #2B2F36; border-left: 4px solid #F0B90B; color: #F0B90B; }
+        .chart-container { position: relative; width: 100%; height: 350px; }
+        .tab-btn-active { border-bottom: 2px solid #F0B90B; color: #F0B90B; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0B0E11; }
+        ::-webkit-scrollbar-thumb { background: #2B2F36; border-radius: 10px; }
+    </style>
+</head>
+<body class="antialiased flex min-h-screen">
+
+    <!-- Application Structure Plan:
+    Designed as a 'Trading Terminal' dashboard.
+    - Sidebar: Navigation and core status.
+    - Header: Live connectivity simulation and "Storyline" timeframe tracker.
+    - Main Content: 
+        1. "The Lab": Interactive Freshness Audit diagnostic tool.
+        2. "Intelligence": Tabbed interface for the 5 Wolf Setups.
+        3. "Terminal": High-contrast Chart.js visualizations showing real-world MSnR setups.
+    Logic: Prioritizes data density and high-contrast visual cues (Green/Red) to reflect actual trading environments.
+    -->
+
+    <!-- Sidebar -->
+    <aside class="w-64 border-r border-terminalBorder bg-terminalSurface flex-col hidden lg:flex fixed h-full z-50">
+        <div class="p-6">
+            <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 bg-wolfGold rounded flex items-center justify-center text-terminalBg font-black">W</div>
+                <span class="font-bold tracking-tighter text-lg">TERMINAL <span class="text-wolfGold">V1</span></span>
+            </div>
+        </div>
+        <nav class="flex-1 px-4 space-y-2 mt-4">
+            <a href="#dashboard" class="sidebar-link-active flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-all">
+                <span class="mr-3">📊</span> Dashboard
+            </a>
+            <a href="#setups" class="flex items-center px-4 py-3 text-textSecondary hover:text-textPrimary rounded-lg text-sm font-medium transition-all">
+                <span class="mr-3">⚡</span> Wolf Setups
+            </a>
+            <a href="#lab" class="flex items-center px-4 py-3 text-textSecondary hover:text-textPrimary rounded-lg text-sm font-medium transition-all">
+                <span class="mr-3">🧪</span> Level Scanner
+            </a>
+            <a href="#terminal" class="flex items-center px-4 py-3 text-textSecondary hover:text-textPrimary rounded-lg text-sm font-medium transition-all">
+                <span class="mr-3">📺</span> Market View
+            </a>
+        </nav>
+        <div class="p-4 border-t border-terminalBorder">
+            <div class="bg-terminalBg p-3 rounded-lg">
+                <div class="text-[10px] text-textSecondary uppercase mb-1">System Status</div>
+                <div class="flex items-center text-wolfGreen text-xs font-bold">
+                    <span class="relative flex h-2 w-2 mr-2">
+                        <span class="animate-ping absolute inline-flex h-full w-2 rounded-full bg-wolfGreen opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-wolfGreen"></span>
+                    </span>
+                    OPTIMAL PERFORMANCE
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 lg:ml-64 flex flex-col">
+        
+        <!-- Header -->
+        <header class="h-16 border-b border-terminalBorder bg-terminalSurface flex items-center justify-between px-8 sticky top-0 z-40">
+            <div class="flex items-center space-x-6">
+                <div class="text-xs">
+                    <span class="text-textSecondary mr-2 uppercase">Storyline:</span>
+                    <span class="text-wolfGold font-bold">W1 > D1 > H4</span>
+                </div>
+                <div class="h-4 w-px bg-terminalBorder"></div>
+                <div class="text-xs">
+                    <span class="text-textSecondary mr-2 uppercase">Method:</span>
+                    <span class="text-textPrimary font-bold">MSnR ALPHA</span>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div id="clock" class="font-mono text-sm text-textSecondary">00:00:00 UTC</div>
+            </div>
+        </header>
+
+        <div class="p-8 space-y-8 terminal-grid">
+            
+            <!-- Hero Stats -->
+            <div id="dashboard" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-terminalSurface border border-terminalBorder p-6 rounded-xl glow-green border-l-4 border-l-wolfGreen">
+                    <div class="text-textSecondary text-xs font-bold uppercase mb-2">Fresh Support (V)</div>
+                    <div class="text-3xl font-bold text-wolfGreen">ACTIVE</div>
+                    <div class="text-[10px] text-textSecondary mt-2 tracking-widest">AWAITING TEST</div>
+                </div>
+                <div class="bg-terminalSurface border border-terminalBorder p-6 rounded-xl glow-red border-l-4 border-l-wolfRed">
+                    <div class="text-textSecondary text-xs font-bold uppercase mb-2">Fresh Resistance (A)</div>
+                    <div class="text-3xl font-bold text-wolfRed">MONITORING</div>
+                    <div class="text-[10px] text-textSecondary mt-2 tracking-widest">HTF ALIGNED</div>
+                </div>
+                <div class="bg-terminalSurface border border-terminalBorder p-6 rounded-xl border-l-4 border-l-wolfGold">
+                    <div class="text-textSecondary text-xs font-bold uppercase mb-2">Current Risk Reward</div>
+                    <div class="text-3xl font-bold text-textPrimary">1 : 3.5</div>
+                    <div class="text-[10px] text-textSecondary mt-2 tracking-widest">WOLF STANDARD</div>
+                </div>
+            </div>
+
+            <!-- Level Scanner (The Lab) -->
+            <section id="lab" class="bg-terminalSurface border border-terminalBorder rounded-xl overflow-hidden">
+                <div class="px-6 py-4 border-b border-terminalBorder flex items-center justify-between">
+                    <h2 class="text-sm font-bold uppercase tracking-widest text-wolfGold">Level Freshness Scanner</h2>
+                    <div class="flex space-x-2">
+                        <button id="btn-scan" class="bg-wolfGold text-terminalBg px-4 py-1.5 rounded text-xs font-bold hover:opacity-90 transition">INITIATE SCAN</button>
+                        <button id="btn-reset" class="bg-terminalBorder text-textPrimary px-4 py-1.5 rounded text-xs font-bold hover:bg-gray-700 transition hidden">RESET CORE</button>
+                    </div>
+                </div>
+                <div class="p-6 flex flex-col md:flex-row gap-8 items-center">
+                    <div class="w-full md:w-2/3 bg-black/40 rounded-lg p-4 border border-terminalBorder relative">
+                        <canvas id="scannerCanvas" width="800" height="200" class="w-full h-40"></canvas>
+                        <div id="scanner-line" class="absolute top-0 left-0 w-full h-full pointer-events-none opacity-20 bg-gradient-to-b from-transparent via-wolfGold/10 to-transparent"></div>
+                    </div>
+                    <div class="w-full md:w-1/3 space-y-4">
+                        <div class="bg-terminalBg p-4 rounded border border-terminalBorder">
+                            <div class="text-[10px] text-textSecondary uppercase">Diagnostic Status</div>
+                            <div id="scan-status" class="text-wolfGreen font-mono text-xl mt-1 tracking-tighter">● LEVEL_FRESH</div>
+                        </div>
+                        <p class="text-xs text-textSecondary leading-relaxed">
+                            <span class="text-wolfGold font-bold">WOLF NOTE:</span> Once a wick pierces the "Structural Bone" line (Candle Close), the level is dead. We only trade first-touch high-probability fresh levels.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Wolf Setups (Intelligence) -->
+            <section id="setups" class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <div class="lg:col-span-4 bg-terminalSurface border border-terminalBorder rounded-xl p-6">
+                    <h2 class="text-sm font-bold uppercase tracking-widest text-wolfGold mb-6">Setup Registry</h2>
+                    <div class="space-y-4">
+                        <button data-target="s1" class="setup-tab tab-btn-active w-full text-left p-3 rounded bg-terminalBg/50 border border-terminalBorder hover:border-wolfGold transition flex justify-between items-center">
+                            <span class="text-sm font-bold">01. BREAKOUT SnR</span>
+                            <span class="text-[10px] bg-wolfGreen/20 text-wolfGreen px-2 py-0.5 rounded">HIGH PROB</span>
+                        </button>
+                        <button data-target="s2" class="setup-tab w-full text-left p-3 rounded bg-terminalBg/50 border border-terminalBorder hover:border-wolfGold transition flex justify-between items-center text-textSecondary">
+                            <span class="text-sm font-bold">02. CLASSIC SnR</span>
+                            <span class="text-[10px] bg-textSecondary/20 text-textSecondary px-2 py-0.5 rounded">STANDARD</span>
+                        </button>
+                        <button data-target="s3" class="setup-tab w-full text-left p-3 rounded bg-terminalBg/50 border border-terminalBorder hover:border-wolfGold transition flex justify-between items-center text-textSecondary">
+                            <span class="text-sm font-bold">03. HNS REVERSAL</span>
+                            <span class="text-[10px] bg-wolfRed/20 text-wolfRed px-2 py-0.5 rounded">TREND FLIP</span>
+                        </button>
+                        <button data-target="s4" class="setup-tab w-full text-left p-3 rounded bg-terminalBg/50 border border-terminalBorder hover:border-wolfGold transition flex justify-between items-center text-textSecondary">
+                            <span class="text-sm font-bold">04. BHNS TRAP</span>
+                            <span class="text-[10px] bg-blue-500/20 text-blue-500 px-2 py-0.5 rounded">ADVANCED</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="lg:col-span-8 bg-terminalSurface border border-terminalBorder rounded-xl p-8 relative overflow-hidden">
+                    <div id="content-s1" class="setup-content block space-y-4">
+                        <div class="flex items-center space-x-2 text-wolfGreen">
+                            <span class="text-2xl font-bold">BREAKOUT MSnR</span>
+                        </div>
+                        <p class="text-textSecondary text-sm leading-relaxed max-w-xl">
+                            When an 'A' Resistance or 'V' Support is broken cleanly, it flips polarity. We look for the <span class="text-wolfGold font-bold">MISS</span> condition: Price must move away sharply before returning for the retest.
+                        </p>
+                        <div class="grid grid-cols-2 gap-4 mt-6">
+                            <div class="bg-terminalBg p-3 rounded border border-terminalBorder">
+                                <div class="text-[10px] text-textSecondary uppercase">Entry Condition</div>
+                                <div class="text-xs text-textPrimary font-mono mt-1">RETEST_OF_BONE</div>
+                            </div>
+                            <div class="bg-terminalBg p-3 rounded border border-terminalBorder">
+                                <div class="text-[10px] text-textSecondary uppercase">Target</div>
+                                <div class="text-xs text-textPrimary font-mono mt-1">NEXT_HTF_LEVEL</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Additional setup contents hidden by default -->
+                    <div id="content-s2" class="setup-content hidden space-y-4">
+                        <div class="text-2xl font-bold text-textPrimary uppercase">Classic SnR</div>
+                        <p class="text-textSecondary text-sm">Direct bounce from a fresh, untouched structural level. Requires "MISS" validation.</p>
+                    </div>
+                    <div id="content-s3" class="setup-content hidden space-y-4">
+                        <div class="text-2xl font-bold text-wolfRed uppercase">HNS Precision</div>
+                        <p class="text-textSecondary text-sm">Line chart identifies the exact peak of the Left Shoulder. We set our limit orders on that horizontal line for the Right Shoulder entry.</p>
+                    </div>
+                    <div id="content-s4" class="setup-content hidden space-y-4">
+                        <div class="text-2xl font-bold text-blue-500 uppercase">BHNS Trap</div>
+                        <p class="text-textSecondary text-sm">Breakout Head and Shoulders. Price violates the Head level, confirming the HTF storyline remains intact.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Terminal (Market Markups) -->
+            <section id="terminal" class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                <div class="bg-terminalSurface border border-terminalBorder rounded-xl p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xs font-bold uppercase tracking-widest text-textSecondary">Active Terminal [XAUUSD - H4]</h3>
+                        <span class="text-wolfGreen text-[10px] font-mono">BULLISH_FLOW</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="terminalChart1"></canvas>
+                    </div>
+                    <div class="mt-4 p-3 bg-black/20 rounded text-[10px] font-mono text-textSecondary">
+                        // ANALYSIS: Resistance 'A' Broken. Monitoring retest at 2042.50. Level is FRESH.
+                    </div>
+                </div>
+                <div class="bg-terminalSurface border border-terminalBorder rounded-xl p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xs font-bold uppercase tracking-widest text-textSecondary">Active Terminal [EURUSD - D1]</h3>
+                        <span class="text-wolfRed text-[10px] font-mono">BEARISH_REVERSAL</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="terminalChart2"></canvas>
+                    </div>
+                    <div class="mt-4 p-3 bg-black/20 rounded text-[10px] font-mono text-textSecondary">
+                        // ANALYSIS: HNS Right Shoulder Forming. Entry level: 1.08940. Level is FRESH.
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+        <footer class="mt-auto p-8 border-t border-terminalBorder bg-terminalSurface text-center">
+            <div class="text-[10px] text-textSecondary tracking-[0.5em] uppercase">Wolf-Analyst Intelligence Systems // MSnR Protocol V1</div>
+        </footer>
+    </main>
+
+    <script>
+        // --- Globals ---
+        const clock = document.getElementById('clock');
+        const sCanvas = document.getElementById('scannerCanvas');
+        const sCtx = sCanvas.getContext('2d');
+        const btnScan = document.getElementById('btn-scan');
+        const btnReset = document.getElementById('btn-reset');
+        const scanStatus = document.getElementById('scan-status');
+        const charts = [];
+        let scanActive = false;
+
+        // --- Utility: Clock ---
+        function updateClock() {
+            const now = new Date();
+            clock.textContent = now.toISOString().split('T')[1].split('.')[0] + ' UTC';
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // --- Logic: Level Scanner ---
+        let priceY = 60;
+        function drawScanner(yPos) {
+            sCtx.clearRect(0, 0, sCanvas.width, sCanvas.height);
+            
+            // Draw Grid Lines
+            sCtx.strokeStyle = '#2B2F36';
+            sCtx.lineWidth = 1;
+            for(let i=0; i<sCanvas.width; i+=40) {
+                sCtx.beginPath(); sCtx.moveTo(i, 0); sCtx.lineTo(i, sCanvas.height); sCtx.stroke();
+            }
+
+            // Draw MSnR Level
+            sCtx.beginPath();
+            sCtx.moveTo(0, 130);
+            sCtx.lineTo(sCanvas.width, 130);
+            sCtx.strokeStyle = scanActive && yPos >= 130 ? '#F6465D' : '#00C076';
+            sCtx.lineWidth = 2;
+            sCtx.setLineDash([5, 5]);
+            sCtx.stroke();
+            sCtx.setLineDash([]);
+
+            // Text Label
+            sCtx.fillStyle = scanActive && yPos >= 130 ? '#F6465D' : '#00C076';
+            sCtx.font = "bold 10px monospace";
+            sCtx.fillText(scanActive && yPos >= 130 ? "!! USED LEVEL !!" : ">> FRESH_MSnR_LEVEL", 10, 145);
+
+            // Draw Price Action Line
+            sCtx.beginPath();
+            sCtx.moveTo(0, 50);
+            sCtx.lineTo(100, 30);
+            sCtx.lineTo(200, 80);
+            sCtx.lineTo(300, 40);
+            sCtx.lineTo(450, yPos);
+            sCtx.lineTo(600, yPos - 30);
+            sCtx.strokeStyle = '#EAECEF';
+            sCtx.lineWidth = 2;
+            sCtx.stroke();
+
+            if (yPos >= 130) {
+                scanStatus.textContent = "✖ LEVEL_USED_DISCARD";
+                scanStatus.className = "text-wolfRed font-mono text-xl mt-1 tracking-tighter";
+                btnScan.classList.add('hidden');
+                btnReset.classList.remove('hidden');
+            }
+        }
+
+        drawScanner(60);
+
+        btnScan.addEventListener('click', () => {
+            scanActive = true;
+            let y = 60;
+            const animate = () => {
+                y += 1.5;
+                drawScanner(y);
+                if (y < 132) requestAnimationFrame(animate);
+            };
+            animate();
+        });
+
+        btnReset.addEventListener('click', () => {
+            scanActive = false;
+            priceY = 60;
+            scanStatus.textContent = "● LEVEL_FRESH";
+            scanStatus.className = "text-wolfGreen font-mono text-xl mt-1 tracking-tighter";
+            btnScan.classList.remove('hidden');
+            btnReset.classList.add('hidden');
+            drawScanner(60);
+        });
+
+        // --- Logic: Tabs ---
+        const tabs = document.querySelectorAll('.setup-tab');
+        const contents = document.querySelectorAll('.setup-content');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => {
+                    t.classList.remove('tab-btn-active', 'bg-terminalBg/50');
+                    t.classList.add('text-textSecondary');
+                });
+                contents.forEach(c => c.classList.add('hidden'));
+
+                tab.classList.add('tab-btn-active', 'bg-terminalBg/50');
+                tab.classList.remove('text-textSecondary');
+                document.getElementById('content-' + tab.getAttribute('data-target')).classList.remove('hidden');
+            });
+        });
+
+        // --- Logic: Charts ---
+        const commonChartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { intersect: false, mode: 'index' },
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { display: false },
+                y: { 
+                    grid: { color: '#1C2127' },
+                    ticks: { color: '#848E9C', font: { size: 10, family: 'monospace' } },
+                    position: 'right'
+                }
+            },
+            elements: {
+                line: { tension: 0, borderWidth: 2 },
+                point: { radius: 0, hoverRadius: 4 }
+            }
+        };
+
+        // Chart 1: Breakout retest
+        charts.push(new Chart(document.getElementById('terminalChart1'), {
+            type: 'line',
+            data: {
+                labels: Array.from({length: 15}, (_, i) => i),
+                datasets: [
+                    {
+                        data: [1800, 1850, 1830, 1900, 1880, 1950, 1920, 2042, 2080, 2050, 2042.50, 2060, 2080, 2100, 2120],
+                        borderColor: '#EAECEF'
+                    },
+                    {
+                        data: Array(15).fill(2042.50),
+                        borderColor: '#00C076',
+                        borderDash: [4, 4],
+                        borderWidth: 1.5
+                    }
+                ]
+            },
+            options: commonChartOptions
+        }));
+
+        // Chart 2: HNS Sell
+        charts.push(new Chart(document.getElementById('terminalChart2'), {
+            type: 'line',
+            data: {
+                labels: Array.from({length: 12}, (_, i) => i),
+                datasets: [
+                    {
+                        data: [1.070, 1.085, 1.08940, 1.080, 1.095, 1.082, 1.08940, 1.075, 1.065, 1.055, 1.050],
+                        borderColor: '#EAECEF'
+                    },
+                    {
+                        data: Array(12).fill(1.08940),
+                        borderColor: '#F6465D',
+                        borderDash: [4, 4],
+                        borderWidth: 1.5
+                    }
+                ]
+            },
+            options: commonChartOptions
+        }));
+
+    </script>
+</body>
+</html>
